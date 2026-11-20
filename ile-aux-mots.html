@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>L'Île aux mots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: joyeux, clair, encourageant ; un jeu pour un collégien qui débute en français
+   IDEA: une carte au trésor d'archipel ; chaque île est une étape du programme de 5e
+   PICTURE: la carte SVG, le renard-héros posé sur la semaine en cours
+   COLOUR and TYPE: mer turquoise, sable, corail ; Baloo 2 pour les titres, Atkinson Hyperlegible pour lire
+   LAYOUT: barre haute, carte, gros bouton de mission ; la mission occupe tout l'écran, une chose à la fois */
+:root{color-scheme:light dark;
+--sea:light-dark(#17a39a,#0b3f3d);--sea2:light-dark(#11877f,#082f2e);
+--card:light-dark(#ffffff,#132a2c);--ink:light-dark(#13263b,#eaf6f4);--soft:light-dark(#566676,#a9c2c0);
+--sand:#ffd27a;--coral:#ff6b4a;--coral2:#e5532f;--good:light-dark(#178a4a,#4ade80);--bad:light-dark(#c9322a,#ff7b6e);
+--line:light-dark(#dbe5e8,#2a4b4e);--chip:light-dark(#eef7f6,#1b393b);--m:light-dark(#1f5fd1,#7fb0ff);--f:light-dark(#d1243f,#ff8597)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--sea);color:var(--ink);font:17px/1.55 "Atkinson Hyperlegible",system-ui,sans-serif;overflow-x:clip;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--sand);outline-offset:2px}
+h1,h2,.title{font-family:"Baloo 2",system-ui,sans-serif;line-height:1.05;margin:0;text-wrap:balance}
+.top{display:flex;align-items:center;gap:12px;padding:14px max(4vw,14px);color:#fff;flex-wrap:wrap}
+.top h1{font-size:clamp(26px,4vw,36px);font-weight:800;margin-right:auto}
+.pill{background:rgba(255,255,255,.18);border-radius:99px;padding:6px 14px;font-weight:700;font-size:15px;white-space:nowrap}
+.pbtn{background:rgba(255,255,255,.18);color:#fff;border-radius:99px;padding:8px 16px;font-weight:700;min-height:44px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 max(4vw,14px) 40px}
+.mapbox{background:var(--sea2);border-radius:24px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(255,255,255,.08)}
+.mapbox svg{display:block;width:100%;height:auto}
+.panel{background:var(--card);border-radius:24px;padding:clamp(18px,3vw,32px);margin-top:16px;box-shadow:0 8px 0 rgba(0,0,0,.12)}
+.go{background:var(--coral);color:#fff;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:22px;border-radius:18px;padding:12px 26px;min-height:56px;box-shadow:0 5px 0 var(--coral2);transition:transform .08s}
+.go:active{transform:translateY(3px);box-shadow:0 2px 0 var(--coral2)}
+.go.big{width:100%;font-size:clamp(22px,3.4vw,30px);padding:18px}
+.sec{background:var(--chip);color:var(--ink);font-weight:700;border-radius:14px;padding:10px 18px;min-height:48px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.weeks{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.wk{background:var(--chip);border-radius:12px;padding:8px 12px;min-height:44px;font-weight:700;font-size:15px}
+.wk.cur{background:var(--sand);color:#13263b}
+.muted{color:var(--soft);font-size:15px}
+.kicker{font-weight:700;color:var(--coral);margin:0 0 6px;font-size:15px}
+/* mission */
+.mbar{display:flex;align-items:center;gap:12px;padding:12px max(4vw,14px);color:#fff}
+.dots{display:flex;gap:6px;margin-right:auto}
+.dots i{width:34px;height:10px;border-radius:9px;background:rgba(255,255,255,.3)}
+.dots i.on{background:var(--sand)}.dots i.done{background:#fff}
+.clock{display:flex;align-items:center;gap:8px;font-weight:700;font-variant-numeric:tabular-nums}
+.clock svg{width:38px;height:38px}
+.stage{background:var(--card);border-radius:28px;max-width:860px;margin:0 auto;padding:clamp(20px,4vw,40px);min-height:60vh;box-shadow:0 8px 0 rgba(0,0,0,.14)}
+.stage h2{font-size:clamp(30px,5vw,46px);font-weight:800}
+.big{font-size:clamp(22px,3.2vw,28px);margin:14px 0 4px}
+.hint{color:var(--soft);margin:8px 0 0}
+.wcard{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px;border-radius:24px;background:var(--chip);margin-top:14px}
+.pic{font-size:clamp(84px,16vw,130px);line-height:1.1}
+.noimg{font-family:"Baloo 2";font-size:64px;color:var(--soft)}
+.word{font-family:"Baloo 2";font-weight:800;font-size:clamp(36px,7vw,58px);line-height:1.1;text-align:center}
+.m{color:var(--m)}.f{color:var(--f)}
+.spk{display:none;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:var(--sand);color:#13263b;flex:none}
+.spk svg{width:28px;height:28px}
+.spk.huge{width:110px;height:110px}.spk.huge svg{width:54px;height:54px}
+body.voice .spk{display:inline-flex}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:20px}
+.opts.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.opt{background:var(--chip);border:3px solid var(--line);border-radius:18px;padding:14px 12px;min-height:70px;font-size:clamp(20px,3vw,26px);font-weight:700;transition:transform .08s}
+.opt:hover{border-color:var(--sea)}
+.opt.ok{background:var(--good);border-color:var(--good);color:#fff}
+.opt.no{background:var(--bad);border-color:var(--bad);color:#fff}
+.fbok{color:var(--good);font-family:"Baloo 2";font-weight:800;font-size:28px;margin:16px 0 0}
+.fbno{color:var(--bad);font-weight:700;margin:16px 0 8px}
+.q{font-size:clamp(24px,4vw,34px);font-weight:700;margin:14px 0 0}
+.blank{display:inline-block;min-width:3.2em;border-bottom:4px solid var(--coral);margin:0 .15em}
+.model{font-size:clamp(22px,3.4vw,30px);font-weight:700;background:var(--chip);border-radius:18px;padding:16px 20px;margin:14px 0 0}
+.text{font-size:clamp(21px,3vw,27px);line-height:1.85;margin-top:14px}
+.text span{border-radius:8px;padding:2px 3px;transition:background .2s}
+.text span.cur{background:var(--sand);color:#13263b}
+.text span.read{color:var(--soft)}
+.tiles{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.tile{background:var(--chip);border:3px solid var(--line);border-radius:14px;padding:10px 16px;font-size:22px;font-weight:700;min-height:56px}
+.tile[disabled]{opacity:.25}
+.line{min-height:72px;border:3px dashed var(--line);border-radius:16px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:24px;font-weight:700;margin-top:16px}
+.stars{display:flex;gap:10px;justify-content:center;margin:12px 0}
+.stars svg{width:clamp(56px,12vw,84px)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chips>span{background:var(--chip);border-radius:99px;padding:6px 14px;font-weight:700}
+.week7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:12px;max-width:440px}
+.week7 div{aspect-ratio:1;border-radius:14px;background:var(--chip);display:grid;place-items:center;font-weight:700;font-size:14px;color:var(--soft)}
+.week7 div.on{background:var(--sand);color:#13263b}
+.poem{line-height:1.75}.gl span{font-weight:400;font-size:15px}.cw{cursor:pointer}.cw.last{background:var(--coral);color:#fff}.cw.err{text-decoration:line-through;text-decoration-color:var(--bad);text-decoration-thickness:3px;background:rgba(201,50,42,.15)}
+.cw.after{opacity:.35}
+.count{font-family:"Baloo 2";font-weight:800;font-size:clamp(64px,14vw,110px);text-align:center;color:var(--coral);line-height:1}
+.bars{display:grid;gap:8px;margin-top:10px}
+.bar{display:grid;grid-template-columns:7.5em minmax(0,1fr) 3.5em;gap:10px;align-items:center;font-size:15px}
+.bar b{display:block;height:18px;border-radius:9px;background:var(--sea)}
+.bar span:last-child{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+label{font-weight:700;display:block;margin-top:16px}
+input[type=text],select{font:inherit;font-size:17px;width:100%;max-width:360px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--chip);color:var(--ink);min-height:48px;margin-top:6px}
+.chk{display:flex;gap:10px;align-items:center;font-weight:400}
+.chk input{width:24px;height:24px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:24px}
+h3{font-family:"Baloo 2";font-size:24px;margin:22px 0 4px}
+.fox{animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px)}}
+@media(prefers-reduced-motion:reduce){.fox{animation:none}.go,.opt{transition:none}}
+@media(max-width:600px){.opts.three{grid-template-columns:repeat(3,minmax(0,1fr))}.dots i{width:22px}.mbar .pbtn{padding:8px 12px}}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<script>
+{
+const WEEKS=[
+{n:1,title:"Je suis en classe",isle:0,
+ words:["le cahier|📓","le livre|📕","la trousse|👝","le stylo|🖊️","le crayon|✏️","la gomme","la règle|📏","les ciseaux|✂️","la colle|🧴","la feuille|📄","lis|📖","écris|✍️","écoute|👂","regarde|👀","répète|🔁","souligne","entoure|⭕","recopie","complète","relie|🔗"],
+ text:"Je m'appelle {N}. J'ai douze ans. Je suis en cinquième. Dans mon sac, j'ai un cahier, un livre et une trousse. Dans ma trousse, il y a un stylo, un crayon, une gomme et une règle. En classe, j'écoute et je regarde. Je lis et j'écris. La professeure dit : « Soulignez le verbe ! » Je souligne le verbe. Je suis content.",
+ qs:[["Comment s'appelle le garçon ?",["{N}","Tom","Nino"],0],["Il est en quelle classe ?",["en cinquième","en sixième","en quatrième"],0],["Qu'est-ce qu'il y a dans la trousse ?",["un stylo","un livre","un cahier"],0]],
+ rule:{t:"Être et avoir",m:"Je suis en 5e. J'ai un cahier."},
+ gram:[["Je ___ en cinquième.",["suis","ai"],0],["J'___ un cahier.",["ai","suis"],0],["Il ___ content.",["est","a"],0],["Elle ___ une gomme.",["a","est"],0],["J'___ douze ans.",["ai","suis"],0],["Tu ___ un stylo ?",["as","es"],0],["Tu ___ fatigué ?",["es","as"],0],["Il ___ une trousse.",["a","est"],0]]},
+{n:2,title:"Mon collège",isle:0,
+ words:["le collège|🏫","la classe","le professeur|🧑‍🏫","l'élève|🧒","le tableau","la cour","la cantine|🍽️","le CDI|📚","le gymnase|🏀","la récréation|⚽","la phrase","le mot","la ligne","la page|📃","la question|❓","réponds|💬","cherche|🔍","coche|✅","colorie|🖍️","range|🗂️"],
+ text:"Mon collège est grand. Il y a vingt classes, une cour, une cantine et un gymnase. Le matin, j'ai cours de français. La professeure écrit une phrase au tableau. Je recopie la phrase dans mon cahier. À dix heures, c'est la récréation. Je vais dans la cour avec mes copains. À midi, je mange à la cantine. Après, je vais au CDI. Je cherche un livre.",
+ qs:[["Où est-ce qu'il mange à midi ?",["à la cantine","dans la cour","au CDI"],0],["Qu'est-ce que la professeure écrit au tableau ?",["une phrase","un livre","une page"],0],["À dix heures, c'est…",["la récréation","la cantine","le cours de français"],0]],
+ rule:{t:"un, une, le, la, les",m:"Un stylo, une gomme. Le tableau, la cour, l'élève, les élèves."},
+ gram:[["___ cahier",["un","une"],0],["___ gomme",["une","un"],0],["___ tableau",["le","la"],0],["___ cour",["la","le"],0],["___ élève",["l'","le"],0],["___ élèves",["les","le"],0],["___ cantine",["la","le"],0],["___ école",["l'","la"],0]]},
+{n:3,title:"Le Corbeau et le Renard",isle:1,
+ words:["le renard|🦊","le corbeau|🐦‍⬛","le loup|🐺","l'agneau|🐑|m","le lion|🦁","le rat|🐀","la fourmi|🐜","la cigale|🦗","la cigogne","le chien|🐕","le chat|🐈","le cheval|🐎","la vache|🐄","le cochon|🐖","la poule|🐔","l'oiseau|🐦|m","le serpent|🐍","la souris|🐁","l'ours|🐻|m","le singe|🐒"],
+ text:"Un corbeau est sur un arbre. Il a un fromage dans son bec. Un renard arrive. Le renard a faim. Il regarde le corbeau et il dit : « Bonjour, Monsieur le Corbeau ! Vous êtes très beau ! Est-ce que vous chantez bien ? » Le corbeau est fier. Il ouvre son bec pour chanter. Le fromage tombe. Le renard prend le fromage et il part. Morale : attention aux personnes qui font trop de compliments !",
+ qs:[["Qu'est-ce que le corbeau a dans son bec ?",["un fromage","une pomme","un ver"],0],["Qui a faim ?",["le renard","le corbeau","le lion"],0],["Pourquoi le fromage tombe ?",["le corbeau ouvre son bec","le renard saute","le vent souffle"],0]],
+ ex:{t:"Le Corbeau et le Renard",src:"Jean de La Fontaine, Fables, livre I (1668) · début de la fable",lines:["Maître Corbeau, sur un arbre perché,","Tenait en son bec un fromage.","Maître Renard, par l'odeur alléché,","Lui tint à peu près ce langage :","« Et bonjour, Monsieur du Corbeau.","Que vous êtes joli ! que vous me semblez beau !","Sans mentir, si votre ramage","Se rapporte à votre plumage,","Vous êtes le Phénix des hôtes de ces bois. »","À ces mots le Corbeau ne se sent pas de joie ;","Et pour montrer sa belle voix,","Il ouvre un large bec, laisse tomber sa proie."],gl:[["alléché","attiré"],["ramage","chant"],["plumage","plumes"],["proie","ce qu'il tient : le fromage"]],q:["Dans le vrai texte, qui tient le fromage ?",["Maître Corbeau","Maître Renard"],0]},
+ rule:{t:"Masculin ou féminin",m:"Un renard, une souris."},
+ gram:[["___ renard",["un","une"],0],["___ souris",["un","une"],1],["___ lion",["un","une"],0],["___ fourmi",["un","une"],1],["___ cigale",["un","une"],1],["___ loup",["un","une"],0],["___ vache",["un","une"],1],["___ chat",["un","une"],0]]},
+{n:4,title:"Dans les contes",isle:1,
+ words:["le roi|🤴","la reine|👸","le prince","la princesse","la sorcière|🧙‍♀️","la fée|🧚","le géant","l'ogre|👹|m","le dragon|🐉","le château|🏰","la forêt|🌲","le trésor|💰","l'épée|🗡️|f","la couronne|👑","le héros|🦸","l'héroïne|🦸‍♀️|f","le méchant|😈","le gentil|😇","l'ami|🤝|m","l'ennemi||m"],
+ text:"Dans les contes, il y a des rois et des reines. Il y a des princes et des princesses. Il y a aussi des sorcières, des géants et des dragons. Les héros ont souvent des problèmes : un ogre, une forêt noire, une porte fermée. Mais ils ont des amis : des fées, des oiseaux, des animaux qui parlent. À la fin, les méchants perdent et les gentils gagnent. Ils trouvent le trésor !",
+ qs:[["Qui perd à la fin ?",["les méchants","les gentils","les fées"],0],["Qu'est-ce que les héros trouvent ?",["le trésor","un dragon","une porte"],0],["Les amis des héros, ce sont…",["des fées et des oiseaux","des ogres","des sorcières"],0]],
+ ex:{t:"Le Petit Chaperon rouge",src:"Charles Perrault, Histoires ou Contes du temps passé (1697) · début du conte",lines:["Il était une fois une petite fille de village, la plus jolie qu'on eût su voir ;","sa mère en était folle, et sa mère-grand plus folle encore.","Cette bonne femme lui fit faire un petit chaperon rouge,","qui lui seyait si bien, que partout on l'appelait le petit Chaperon rouge.","Un jour sa mère, ayant cuit et fait des galettes, lui dit :","« Va voir comment se porte ta mère-grand, car on m'a dit qu'elle était malade.","Porte-lui une galette et ce petit pot de beurre. »"],gl:[["mère-grand","grand-mère"],["chaperon","capuche"],["lui seyait","lui allait bien"],["galette","gâteau plat"]],q:["Chez qui va le petit Chaperon rouge ?",["chez sa mère-grand","à l'école","chez le loup"],0]},
+ rule:{t:"Singulier et pluriel",m:"Un roi, des rois. Un château, des châteaux."},
+ gram:[["un roi, des ___",["rois","roi"],0],["un château, des ___",["châteaux","châteaus"],0],["une reine, des ___",["reines","reine"],0],["un oiseau, des ___",["oiseaux","oiseaus"],0],["un dragon, des ___",["dragons","dragon"],0],["une épée, des ___",["épées","épée"],0],["un géant, des ___",["géants","géant"],0],["un trésor, des ___",["trésors","trésor"],0]]},
+{n:5,title:"Le Loup et l'Agneau",isle:1,
+ words:["rusé|🦊","naïf","gourmand|😋","généreux|🎁","courageux|🦁","peureux|😨","gentil|😊","méchant|😠","fort|💪","faible","rapide|⚡","lent|🐢","grand|🦒","petit|🐜","beau|✨","laid","poli|🙇","impoli","intelligent|🧠","fier|😤"],
+ text:"Un petit agneau boit l'eau claire d'une rivière. Un grand loup noir arrive. Il est méchant et il a faim. « Tu salis mon eau ! » crie le loup. L'agneau est doux et poli. Il répond : « Mais non, monsieur ! Je bois plus bas que vous. » Le loup est en colère. Il ne veut pas écouter. Il mange le petit agneau. Morale : le plus fort gagne souvent, mais il n'a pas toujours raison.",
+ qs:[["Où est-ce que l'agneau boit ?",["dans une rivière","dans un lac","dans la mer"],0],["Comment est le loup ?",["méchant","doux","poli"],0],["Qui mange l'agneau ?",["le loup","le renard","le lion"],0]],
+ ex:{t:"Le Loup et l'Agneau",src:"Jean de La Fontaine, Fables, livre I (1668) · début de la fable",lines:["La raison du plus fort est toujours la meilleure :","Nous l'allons montrer tout à l'heure.","Un Agneau se désaltérait","Dans le courant d'une onde pure.","Un Loup survient à jeun, qui cherchait aventure,","Et que la faim en ces lieux attirait.","« Qui te rend si hardi de troubler mon breuvage ?","Dit cet animal plein de rage :","Tu seras châtié de ta témérité. »"],gl:[["se désaltérait","buvait"],["onde pure","eau propre"],["à jeun","sans avoir mangé"],["breuvage","boisson"]],q:["Dans le vrai texte, que fait l'agneau ?",["il boit","il dort","il mange"],0]},
+ rule:{t:"L'adjectif s'accorde",m:"Le petit agneau, la petite fourmi, les petits rats."},
+ gram:[["une ___ fourmi",["petite","petit"],0],["un loup ___",["méchant","méchante"],0],["une cigale ___",["gourmande","gourmand"],0],["des rats ___",["rapides","rapide"],0],["une reine ___",["généreuse","généreux"],0],["un agneau ___",["poli","polie"],0],["des fées ___",["gentilles","gentil"],0],["un lion ___",["fort","forte"],0]]},
+{n:6,title:"La Cigale et la Fourmi",isle:1,
+ words:["manger|🍽️","boire|🥤","chanter|🎤","danser|💃","jouer|🎮","travailler|👷","porter|📦","préparer|🍳","chercher|🔍","trouver|🎯","regarder|👀","écouter|👂","parler|🗣️","demander|🙋","donner|🎁","aimer|❤️","marcher|🚶","tomber","arriver|🏁","rester|🪑"],
+ text:"En été, la cigale chante. Elle danse, elle joue, elle rigole. La fourmi travaille. Elle porte des graines et elle prépare sa maison. En hiver, il fait froid. La cigale n'a rien à manger. Elle frappe chez la fourmi : « S'il te plaît, donne-moi un peu de nourriture ! » La fourmi demande : « Qu'est-ce que tu fais en été ? — Je chante ! — Tu chantes ? Alors maintenant, danse ! »",
+ qs:[["Que fait la cigale en été ?",["elle chante","elle travaille","elle dort"],0],["Que fait la fourmi ?",["elle travaille","elle danse","elle chante"],0],["En hiver, il fait…",["froid","chaud","beau"],0]],
+ ex:{t:"La Cigale et la Fourmi",src:"Jean de La Fontaine, Fables, livre I (1668) · extrait",lines:["La Cigale, ayant chanté","Tout l'été,","Se trouva fort dépourvue","Quand la bise fut venue :","Pas un seul petit morceau","De mouche ou de vermisseau.","Elle alla crier famine","Chez la Fourmi sa voisine,","[…]","« Que faisiez-vous au temps chaud ?","Dit-elle à cette emprunteuse.","— Nuit et jour à tout venant","Je chantais, ne vous déplaise.","— Vous chantiez ? j'en suis fort aise.","Eh bien ! dansez maintenant. »"],gl:[["dépourvue","sans rien"],["la bise","le vent froid de l'hiver"],["vermisseau","petit ver"],["crier famine","dire qu'on a faim"]],q:["Quand la cigale n'a plus rien à manger ?",["quand la bise est venue","en été","le matin"],0]},
+ rule:{t:"Le présent des verbes en -er",m:"Je chante, tu chantes, il chante, nous chantons, vous chantez, ils chantent."},
+ gram:[["Je ___ (chanter)",["chante","chantes","chantons"],0],["Tu ___ (danser)",["danses","danse","dansez"],0],["Il ___ (jouer)",["joue","joues","jouent"],0],["Nous ___ (travailler)",["travaillons","travaillez","travaille"],0],["Vous ___ (parler)",["parlez","parlons","parle"],0],["Ils ___ (manger)",["mangent","mange","mangez"],0],["La cigale ___ (chanter)",["chante","chantent","chantes"],0],["Les fourmis ___ (travailler)",["travaillent","travaille","travailles"],0]]},
+{n:7,title:"Le Lion et le Rat",isle:1,
+ words:["content|😀","triste|😢","en colère|😡","avoir peur|😱","avoir faim|🍔","avoir soif|💧","avoir froid|🥶","avoir chaud|🥵","fatigué|😴","surpris|😮","inquiet|😟","jaloux|😒","calme|😌","nerveux|😬","rire|😂","pleurer|😭","crier|📢","aider|🤝","sauver|🛟","libre|🕊️"],
+ text:"Un lion dort. Un petit rat passe sur sa patte. Le lion se réveille. Il n'est pas content ! Il attrape le rat. Le rat a peur : « Ne me mange pas ! Un jour, je vais t'aider. » Le lion rit, mais il ne mange pas le rat. Plus tard, le lion tombe dans un filet. Il ne peut pas sortir. Il est triste. Le rat arrive. Il coupe le filet avec ses dents. Le lion est libre ! Morale : on a souvent besoin d'un plus petit que soi.",
+ qs:[["Qui tombe dans un filet ?",["le lion","le rat","le renard"],0],["Comment le rat aide le lion ?",["il coupe le filet avec ses dents","il appelle ses amis","il crie très fort"],0],["Est-ce que le lion mange le rat ?",["non","oui"],0]],
+ ex:{t:"Le Lion et le Rat",src:"Jean de La Fontaine, Fables, livre II (1668) · extrait",lines:["Il faut, autant qu'on peut, obliger tout le monde :","On a souvent besoin d'un plus petit que soi.","[…]","Entre les pattes d'un Lion","Un Rat sortit de terre assez à l'étourdie.","Le Roi des animaux, en cette occasion,","Montra ce qu'il était, et lui donna la vie.","Ce bienfait ne fut pas perdu.","[…]","Ce Lion fut pris dans des rets,","Dont ses rugissements ne le purent défaire.","Sire Rat accourut, et fit tant par ses dents","Qu'une maille rongée emporta tout l'ouvrage.","Patience et longueur de temps","Font plus que force ni que rage."],gl:[["obliger","rendre service"],["à l'étourdie","sans faire attention"],["rets","filet"],["rongée","coupée avec les dents"]],q:["Dans le vrai texte, qui libère le lion ?",["Sire Rat","le Roi des animaux","un chasseur"],0]},
+ rule:{t:"La phrase négative : ne… pas",m:"Le lion mange le rat. Le lion ne mange pas le rat."},
+ gram:[{b:["Le lion","ne","mange","pas","le rat."]},{b:["Je","ne","suis","pas","content."]},{b:["Le rat","n'a","pas","peur."]},{b:["Elle","ne","chante","pas."]},{b:["Il","n'est","pas","triste."]},{b:["Tu","ne","joues","pas."]}]},
+{n:8,title:"Le Renard et la Cigogne",isle:1,
+ words:["la morale","la leçon","le conseil","la ruse","le piège|🪤","la vérité","le mensonge|🤥","l'erreur|❌|f","avoir raison|✔️","avoir tort","se moquer|😝","inviter|💌","servir|🍲","partager|🍰","punir","pardonner","toujours","jamais","souvent","parfois"],
+ text:"Le renard invite la cigogne : « Viens dîner chez moi ce soir ! » La cigogne est contente. Mais quelle surprise ! Le renard sert la soupe dans une assiette plate. La cigogne a un long bec. Elle ne peut pas manger. Le renard mange tout. Quelques jours plus tard, la cigogne invite le renard. Elle sert le repas dans un vase long et étroit. Le renard a faim, mais il ne peut pas manger ! Est-ce qu'il est content ? Non ! Morale : on reçoit ce qu'on donne.",
+ qs:[["Dans quoi le renard sert la soupe ?",["une assiette plate","un vase","un bol"],0],["Pourquoi la cigogne ne peut pas manger ?",["elle a un long bec","elle n'a pas faim","la soupe est froide"],0],["Quelle est la morale ?",["on reçoit ce qu'on donne","le plus fort a raison","il faut chanter"],0]],
+ ex:{t:"Le Renard et la Cigogne",src:"Jean de La Fontaine, Fables, livre I (1668) · début de la fable",lines:["Compère le Renard se mit un jour en frais,","Et retint à dîner commère la Cigogne.","Le régal fut petit et sans beaucoup d'apprêts :","Le galand, pour toute besogne,","Avait un brouet clair ; il vivait chichement.","Ce brouet fut par lui servi sur une assiette :","La Cigogne au long bec n'en put attraper miette ;","Et le drôle eut lapé le tout en un moment."],gl:[["brouet","soupe"],["chichement","sans dépenser"],["miette","un tout petit morceau"],["lapé","bu avec la langue"]],q:["Dans le vrai texte, sur quoi le renard sert le brouet ?",["sur une assiette","dans un vase","dans un bol"],0]},
+ rule:{t:"Les types de phrases",m:"Tu viens. Tu viens ? Viens !"},
+ gram:[["Tu viens",[".","?","!"],1,1],["Est-ce que tu viens",[".","?","!"],1,1],["Viens ici",[".","?","!"],2,1],["Quelle surprise",[".","?","!"],2,1],["Le renard invite la cigogne",[".","?","!"],0,1],["Où est la soupe",[".","?","!"],1,1],["Elle ne peut pas manger",[".","?","!"],0,1],["Bravo",[".","?","!"],2,1]]}
+];
+const ISLES=[{name:"L'île du Collège"},{name:"La Forêt des fables"},{name:"Le Labyrinthe des héros"},{name:"L'Archipel du voyage"},{name:"Le Théâtre"}];
+const NODES=[[118,438],[228,402],[352,372],[410,300],[498,262],[590,280],[640,350],[548,398]];
+const BRAVO=["Bravo !","Super !","Génial !","Excellent !","Parfait !","Très bien !"];
+const JOURS=["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+const MOIS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const MODES={1:"Écoute, puis répète chaque phrase (lecture en écho).",2:"Lis à deux voix : une phrase toi, une phrase l'adulte.",3:"Lis seul. Demande de l'aide si besoin.",4:"Lis avec le ton : fais la voix des personnages !",5:"Lis, puis fais le chrono d'une minute.",6:"Lis le texte de la semaine.",0:"Lis le texte de la semaine."};
+const SPK='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+const STAR=on=>`<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="${on?'#ffc23a':'var(--chip)'}" stroke="${on?'#e59a00':'var(--line)'}" stroke-width="1.2"/></svg>`;
+const KEY='ileauxmots-v1';
+const DEF={v:1,name:"",voice:"",week:1,boxes:{},missions:{},days:[],flu:[],slow:true,updated:0};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const tk=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const $=s=>document.querySelector(s);
+const view=$("#view");
+let S=load(),ACT={},M=null,timer=null,dbRef=null,writing=Promise.resolve(),tts=null,ac=null,place="map";
+function load(){try{const r=JSON.parse(localStorage.getItem(KEY)||"null");if(r&&r.v===1)return Object.assign(clone(DEF),r)}catch(e){}return clone(DEF)}
+function save(){S.updated=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(dbRef){const snap=clone(S);writing=writing.then(()=>dbRef.set(snap)).catch(()=>{})}}
+const nm=()=>S.name.trim()||"Adam";
+const fill=t=>t.split("{N}").join(nm());
+function W(s){const [l,e,g]=s.split("|");const m=l.match(/^(les |le |la |l')/);const art=m?m[1].trim():"";const bare=m?l.slice(m[1].length):l;const gen=art==="le"?"m":art==="la"?"f":art==="l'"?(g||""):"";return {l,e:e||"",bare,art,gen}}
+const ALL={};WEEKS.forEach(w=>w.words.forEach(s=>{const x=W(s);ALL[x.l]={raw:s,wk:w.n}}));
+function det(x){if(!x.art)return esc(x.l);const c=x.gen==="m"?"m":x.gen==="f"?"f":"";const sep=x.art==="l'"?"":" ";return `<span class="${c}">${esc(x.art)}</span>${sep}${esc(x.bare)}`}
+const spk=(t,c="")=>`<button class="spk ${c}" data-say="${esc(t)}" aria-label="Écouter">${SPK}</button>`;
+/* voix : d'abord une voix française de France installée sur l'appareil, sinon la voix Claude */
+let frVoices=[];
+function loadVoices(){try{const all=window.speechSynthesis.getVoices(),fr=all.filter(v=>/^fr[-_]FR/i.test(v.lang)),other=all.filter(v=>/^fr/i.test(v.lang)&&!/^fr[-_]FR/i.test(v.lang));frVoices=fr.concat(other);if(frVoices.length)document.body.classList.add("voice");if(place==="parent"&&$("#vc")&&!$("#vc").dataset.n)showParent()}catch(e){}}
+if("speechSynthesis" in window){loadVoices();try{window.speechSynthesis.addEventListener("voiceschanged",loadVoices)}catch(e){}}
+function bestVoice(){if(S.voice==="claude")return null;if(S.voice){const v=frVoices.find(v=>v.name===S.voice);if(v)return v}const fr=frVoices.filter(v=>/^fr[-_]FR/i.test(v.lang));const pref=[/google/i,/natural|online|neural/i,/denise|henri|vivienne|remy|eloise/i,/audrey|aur[ée]lie|thomas/i,/hortense|julie|paul/i];for(const r of pref){const v=fr.find(v=>r.test(v.name));if(v)return v}return fr[0]||(tts?null:frVoices[0])||null}
+function say(t){const rate=S.slow?0.8:0.95,v=bestVoice();if(v)return sayLocal(t,rate,v);if(tts){tts.speak(t,{language:"fr-FR",rate}).catch(e=>{if(e&&e.code==="not_granted")tts=null});return}}
+function sayLocal(t,rate,v){try{const s=window.speechSynthesis;s.cancel();const parts=t.match(/[^.!?…]+[.!?…»]*\s*/g)||[t];parts.forEach(x=>{if(!x.trim())return;const u=new SpeechSynthesisUtterance(x.trim());u.lang=v.lang||"fr-FR";u.voice=v;u.rate=rate;s.speak(u)})}catch(e){}}
+function beep(ok){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime;o.type="triangle";o.frequency.setValueAtTime(ok?660:200,t);if(ok)o.frequency.setValueAtTime(880,t+.1);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.16,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.32);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+.34)}catch(e){}}
+/* progression */
+function streak(){const set=new Set(S.days);let d=new Date();if(!set.has(tk(d)))d.setDate(d.getDate()-1);let n=0;while(set.has(tk(d))){n++;d.setDate(d.getDate()-1)}return n}
+function stars(){return Object.values(S.missions).reduce((a,b)=>a+b,0)}
+function due(maxWk){const d=new Date(),wd=d.getDay();return Object.keys(S.boxes).filter(l=>{const b=S.boxes[l];if(!ALL[l]||ALL[l].wk>maxWk)return false;return b===1||(b===2&&[1,3,5].includes(wd))||(b===3&&wd===5)||(b===4&&wd===6)||(b===5&&d.getDate()===1)})}
+/* clics */
+document.addEventListener("click",e=>{const sp=e.target.closest("[data-say]");if(sp){say(sp.dataset.say);return}
+ const o=e.target.closest("[data-o]");if(o&&ACT.o){ACT.o(+o.dataset.o,o);return}
+ const a=e.target.closest("[data-a]");if(a){const f=ACT[a.dataset.a]||G[a.dataset.a];if(f)f(a)}});
+const G={home:()=>{stopTimer();showMap()},parent:()=>showParent(),mission:()=>startMission(S.week),chrono:()=>showChrono(S.week),replay:a=>startMission(+a.dataset.w)};
+/* carte */
+function mapSVG(){const cur=S.week;let s=`<svg viewBox="0 0 1000 560" role="img" aria-label="Carte de l'archipel : semaine ${cur}">`;
+ const isle=(cx,cy,rx,ry,lock)=>`<ellipse cx="${cx}" cy="${cy+16}" rx="${rx+14}" ry="${ry+10}" fill="rgba(0,0,0,.16)"/><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${lock?'#cfc6a8':'#ffd27a'}"/><ellipse cx="${cx}" cy="${cy-8}" rx="${rx*.84}" ry="${ry*.74}" fill="${lock?'#9fb3a3':'#6cc070'}"/>`;
+ s+=`<g opacity=".25" stroke="#fff" stroke-width="2" fill="none"><path d="M40 90q30-14 60 0t60 0"/><path d="M700 60q30-14 60 0t60 0"/><path d="M60 520q30-14 60 0t60 0"/><path d="M380 520q30-14 60 0t60 0"/></g>`;
+ s+=isle(175,420,140,78,0)+isle(495,320,205,128,0)+isle(790,470,110,58,1)+isle(860,250,100,62,1)+isle(770,105,96,52,1);
+ s+=`<g fill="#3f9a4a"><circle cx="430" cy="235" r="16"/><circle cx="455" cy="225" r="12"/><circle cx="640" cy="280" r="15"/><circle cx="620" cy="400" r="13"/><circle cx="380" cy="300" r="12"/><circle cx="560" cy="210" r="14"/></g>`;
+ s+=`<g><rect x="150" y="365" width="56" height="34" rx="3" fill="#fff"/><path d="M144 367l34-22 34 22z" fill="#ff6b4a"/><rect x="172" y="381" width="12" height="18" fill="#13263b"/></g>`;
+ s+=`<path d="M${NODES.map(p=>p.join(" ")).join(" L")} L 730 450 L 830 300 L 770 150" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round" opacity=".8"/>`;
+ const lbl=(x,y,t)=>`<text x="${x}" y="${y}" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="22" fill="#13263b" stroke="#fff" stroke-width="6" paint-order="stroke">${esc(t)}</text>`;
+ const soon=(x,y)=>`<text x="${x}" y="${y}" text-anchor="middle" font-family="Baloo 2" font-weight="600" font-size="17" fill="#13263b" opacity=".75">bientôt</text>`;
+ s+=lbl(175,525,ISLES[0].name)+lbl(495,470,ISLES[1].name)+lbl(790,538,ISLES[2].name)+lbl(845,345,ISLES[3].name)+lbl(770,180,ISLES[4].name)+soon(790,478)+soon(860,257)+soon(770,111);
+ NODES.forEach((p,i)=>{const n=i+1,open=n<=cur,done=S.missions[n]||0;s+=`<g data-a="${open?'replay':''}" data-w="${n}" style="cursor:${open?'pointer':'default'}" role="button" aria-label="Semaine ${n}"><circle cx="${p[0]}" cy="${p[1]}" r="23" fill="${n===cur?'#ff6b4a':open?'#fff':'#e4e8e6'}" stroke="#13263b" stroke-width="3"/><text x="${p[0]}" y="${p[1]+8}" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="22" fill="${n===cur?'#fff':'#13263b'}">${n}</text>`;
+  for(let k=0;k<Math.min(done,5);k++)s+=`<circle cx="${p[0]-16+k*8}" cy="${p[1]+33}" r="3.5" fill="#ffc23a" stroke="#13263b" stroke-width="1"/>`;s+=`</g>`});
+ const f=NODES[cur-1];s+=`<g transform="translate(${f[0]+30} ${f[1]-40})"><g class="fox"><ellipse cx="0" cy="30" rx="18" ry="5" fill="rgba(0,0,0,.25)"/><path d="M-17-4L-14-30L-3-14Z" fill="#ff7a2f" stroke="#13263b" stroke-width="2"/><path d="M17-4L14-30L3-14Z" fill="#ff7a2f" stroke="#13263b" stroke-width="2"/><circle r="18" fill="#ff7a2f" stroke="#13263b" stroke-width="2"/><path d="M-15 3Q0 22 15 3Q0 9-15 3Z" fill="#fff"/><circle cx="-6" cy="-3" r="2.6" fill="#13263b"/><circle cx="6" cy="-3" r="2.6" fill="#13263b"/><circle cx="0" cy="8" r="3" fill="#13263b"/></g></g>`;
+ return s+"</svg>"}
+function topBar(){return `<header class="top"><h1>L'Île aux mots</h1><span class="pill">${stars()} missions</span><span class="pill">${streak()} soir${streak()>1?"s":""} d'affilée</span><button class="pbtn" data-a="parent">Espace parent</button></header>`}
+function showMap(){place="map";ACT={};const w=WEEKS[S.week-1];const done=S.missions[S.week]||0;
+ view.innerHTML=topBar()+`<main class="wrap"><div class="mapbox">${mapSVG()}</div><div class="panel"><p class="kicker">Semaine ${w.n} · ${esc(ISLES[w.isle].name)}</p><h2 class="title" style="font-size:clamp(28px,4.5vw,40px)">${esc(w.title)}</h2><p class="muted">Missions faites cette semaine : ${done} · Règle : ${esc(w.rule.t)}${w.ex?` · Vrai texte : ${esc(w.ex.t)}`:""}</p><div class="row"><button class="go big" data-a="mission">Mission du soir · 10 minutes</button></div><div class="row"><button class="sec" data-a="chrono">Chrono lecture 1 minute</button>${done>=5&&S.week<WEEKS.length?`<button class="sec" data-a="nextwk">Passer à la semaine ${S.week+1}</button>`:""}</div>${S.week>1?`<p class="muted" style="margin-top:18px">Revoir une semaine :</p><div class="weeks">${WEEKS.slice(0,S.week).map(x=>`<button class="wk ${x.n===S.week?'cur':''}" data-a="replay" data-w="${x.n}">S${x.n} · ${esc(x.title)}</button>`).join("")}</div>`:""}</div></main>`;
+ ACT.nextwk=()=>{S.week++;save();showMap()}}
+/* mission */
+function startMission(wk){M={wk,w:WEEKS[wk-1],step:0,steps:["start","cards","read","gram","win"],ok:0,tot:0,fresh:[],end:Date.now()+600000,warned:false};place="mission";
+ view.innerHTML=`<div class="mbar"><div class="dots" id="dots"></div><div class="clock" id="clock"></div><button class="pbtn" data-a="home">Carte</button></div><main class="wrap"><section class="stage" id="stage"></section></main>`;
+ startTimer();runStep()}
+function startTimer(){stopTimer();timer=setInterval(tick,1000);tick()}
+function stopTimer(){if(timer)clearInterval(timer);timer=null}
+function tick(){const c=$("#clock");if(!c||!M)return;const left=Math.max(0,M.end-Date.now()),s=Math.ceil(left/1000),fr=left/600000;
+ c.innerHTML=`<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="5"/><circle cx="18" cy="18" r="15" fill="none" stroke="#ffd27a" stroke-width="5" stroke-dasharray="${(fr*94.2).toFixed(1)} 94.2" transform="rotate(-90 18 18)" stroke-linecap="round"/></svg>${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+ if(left<=0&&!M.warned){M.warned=true;beep(true);c.insertAdjacentHTML("beforeend"," · c'est l'heure, finis cet exercice !")}}
+function stage(h){ACT={};const el=$("#stage");if(!el)return;el.innerHTML=h;window.scrollTo({top:0})}
+function next(){M.step++;runStep()}
+function runStep(){$("#dots").innerHTML=M.steps.map((s,i)=>`<i class="${i<M.step?'done':i===M.step?'on':''}"></i>`).join("");({start:stepStart,cards:stepCards,read:stepRead,gram:stepGram,win:stepWin})[M.steps[M.step]]()}
+function stepStart(){const d=new Date(),ph=`Aujourd'hui, c'est ${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]}.`;
+ stage(`<p class="kicker">1 · Démarrage</p><h2>Bonjour ${esc(nm())} !</h2><p class="big">${ph}</p><p class="hint">Écoute, puis dis la phrase à voix haute.</p><div class="row">${spk(ph)}<button class="go" data-a="n">Je l'ai dit</button></div>`);ACT.n=next}
+function choices(head,opts,ai,after,cls=""){stage(head+`<div class="opts ${cls}">${opts.map((o,j)=>`<button class="opt" data-o="${j}">${o}</button>`).join("")}</div><div id="fb"></div>`);let done=false;
+ ACT.o=(j,btn)=>{if(done)return;done=true;const ok=j===ai;M.tot++;if(ok)M.ok++;beep(ok);document.querySelectorAll(".opt")[ai].classList.add("ok");if(!ok)btn.classList.add("no");if(after.rec)after.rec(ok);if(after.say)setTimeout(()=>say(after.say),250);
+  if(ok){$("#fb").innerHTML=`<p class="fbok">${pick(BRAVO)}</p>`;setTimeout(after.next,1300)}else{$("#fb").innerHTML=`<p class="fbno">Presque ! La bonne réponse est en vert.</p><button class="go" data-a="cont">Continuer</button>`;ACT.cont=after.next}}}
+function stepCards(){const words=M.w.words.map(W);const fresh=words.filter(x=>!S.boxes[x.l]).slice(0,5);M.fresh=fresh.map(x=>x.l);let i=0;
+ const intro=()=>{if(i>=fresh.length)return quiz();const x=fresh[i];stage(`<p class="kicker">2 · Cartes-mots · nouveau mot ${i+1} sur ${fresh.length}</p><div class="wcard"><div class="pic">${x.e||'<span class="noimg">Aa</span>'}</div><div class="word">${det(x)}</div></div><p class="hint">Écoute et répète le mot.</p><div class="row">${spk(x.l)}<button class="go" data-a="g">Je répète</button></div>`);say(x.l);ACT.g=()=>{S.boxes[x.l]=1;i++;intro()}};
+ const quiz=()=>{let pool=[...new Set([...M.fresh,...shuffle(due(M.wk))])].slice(0,8);if(pool.length<8)pool=pool.concat(shuffle(words.map(x=>x.l).filter(l=>!pool.includes(l)))).slice(0,8);pool=shuffle(pool);let k=0;
+  const ask=()=>{if(k>=pool.length){save();return next()}const x=W(ALL[pool[k]].raw);const same=WEEKS[ALL[x.l].wk-1].words.map(W).filter(y=>y.l!==x.l);const types=["hear"];if(x.e)types.push("pic","pic");if(x.gen==="m"||x.gen==="f")types.push("genre");const ty=pick(types);
+   const rec=ok=>{S.boxes[x.l]=ok?Math.min(5,(S.boxes[x.l]||1)+1):1};const nx=()=>{k++;ask()};const kick=`<p class="kicker">2 · Cartes-mots · ${k+1} sur ${pool.length}</p>`;
+   if(ty==="genre"){choices(kick+`<div class="wcard"><div class="pic">${x.e||'<span class="noimg">Aa</span>'}</div><div class="word">${esc(x.bare)}</div></div><p class="q">un ou une ?</p>`,["un","une"],x.gen==="m"?0:1,{rec,next:nx,say:(x.gen==="m"?"un ":"une ")+x.bare});return}
+   const pool2=(ty==="pic"?same.filter(y=>!y.e||y.e!==x.e):same);const ds=shuffle(pool2).slice(0,3);const opts=shuffle([x,...ds]);const ai=opts.indexOf(x);
+   if(ty==="pic")choices(kick+`<div class="wcard"><div class="pic">${x.e}</div></div><p class="q">Quel est ce mot ?</p>`,opts.map(det),ai,{rec,next:nx,say:x.l});
+   else{choices(kick+`<div class="row" style="justify-content:center">${spk(x.l,"huge")}</div><p class="q" style="text-align:center">Écoute. Quel mot entends-tu ?</p>`,opts.map(det),ai,{rec,next:nx,say:x.l});say(x.l)}};
+  ask()};
+ intro()}
+function sentences(t){return t.split(/(?<=[.!?…»])\s+(?=[A-ZÀ-ÖÉ«—])/)}
+function stepRead(){const w=M.w,ss=sentences(fill(w.text));let i=0;
+ const draw=()=>{stage(`<p class="kicker">3 · Lecture · ${esc(w.title)}</p><p class="hint" style="margin-top:0">${MODES[new Date().getDay()]}</p><div class="text">${ss.map((s,j)=>`<span class="${j===i?'cur':j<i?'read':''}">${esc(s)}</span>`).join(" ")}</div><div class="row">${i<ss.length?spk(ss[i])+`<button class="go" data-a="r">Phrase lue (${i+1} sur ${ss.length})</button>`:`<button class="go" data-a="q">Questions</button>`}<button class="sec" data-a="c">Chrono 1 minute</button></div>`);
+  ACT.r=()=>{i++;draw()};ACT.q=()=>questions(0);ACT.c=()=>chrono(M.wk,()=>questions(0))};
+ const questions=k=>{if(k>=w.qs.length)return w.ex?extract():next();const [q,o,ai]=w.qs[k];const opts=o.map(fill);const order=shuffle(opts.map((_,j)=>j));const qq=fill(q);
+  choices(`<p class="kicker">3 · Lecture · question ${k+1} sur ${w.qs.length}</p><p class="q">${esc(qq)}</p><div class="row">${spk(qq)}</div>`,order.map(j=>esc(opts[j])),order.indexOf(ai),{next:()=>questions(k+1),say:opts[ai]})};
+ const extract=()=>{const ex=w.ex,all=ex.lines.filter(l=>l!=="[…]").join(" ");let j=0;
+  const dr=()=>{stage(`<p class="kicker">3 · Lecture · le vrai texte</p><h2 style="font-size:clamp(26px,4vw,38px)">${esc(ex.t)}</h2><p class="muted">${esc(ex.src)}. Écoute chaque ligne, puis répète-la.</p><div class="text poem">${ex.lines.map((l,i)=>`<span class="${i===j?'cur':i<j?'read':''}">${esc(l)}</span>`).join("<br>")}</div><div class="chips gl">${ex.gl.map(g=>`<span><b>${esc(g[0])}</b> = ${esc(g[1])}</span>`).join("")}</div><div class="row">${j<ex.lines.length?spk(ex.lines[j])+`<button class="go" data-a="l">Ligne lue (${j+1} sur ${ex.lines.length})</button>`:`<button class="go" data-a="q">Une question</button>`}<button class="sec" data-say="${esc(all)}">Écouter tout</button><button class="sec" data-a="skip">Plus tard</button></div>`);
+   ACT.l=()=>{j++;if(ex.lines[j]==="[…]")j++;dr()};ACT.skip=next;
+   ACT.q=()=>{const [q,o,ai]=ex.q,order=shuffle(o.map((_,i)=>i));choices(`<p class="kicker">3 · Lecture · le vrai texte</p><p class="q">${esc(q)}</p>`,order.map(i=>esc(o[i])),order.indexOf(ai),{next,say:o[ai]})}};
+  dr()};
+ draw()}
+function stepGram(){const w=M.w;stage(`<p class="kicker">4 · Grammaire</p><h2>${esc(w.rule.t)}</h2><p class="model">${esc(w.rule.m)}</p><div class="row">${spk(w.rule.m)}<button class="go" data-a="g">C'est parti</button></div>`);
+ const items=shuffle(w.gram).slice(0,5);let k=0;
+ const ask=()=>{if(k>=items.length)return next();const it=items[k],nx=()=>{k++;ask()},kick=`<p class="kicker">4 · Grammaire · ${k+1} sur ${items.length}</p>`;
+  if(it.b)return build(it.b,kick,nx);const [q,o,ai,punct]=it;const shown=punct?esc(q)+' <span class="blank"></span>':esc(q).replace("___",'<span class="blank"></span>');
+  const full=punct?q+(o[ai]==="."?".":" "+o[ai]):q.replace(/\s*\(.*\)$/,"").replace("___",o[ai]).replace("' ","'").replace(/^l'\s/,"l'");
+  const order=punct?[0,1,2]:shuffle(o.map((_,j)=>j));choices(kick+`<p class="q">${shown}</p>`,order.map(j=>esc(o[j])),order.indexOf(ai),{next:nx,say:full},o.length===3?"three":"")};
+ ACT.g=ask}
+function build(parts,kick,nx){const tiles=shuffle(parts.map((p,i)=>i));let got=[];
+ const draw=()=>{stage(kick+`<p class="q">Remets les mots dans l'ordre.</p><div class="line">${got.map(i=>esc(parts[i])).join(" ")||'<span class="muted">Touche les mots…</span>'}</div><div class="tiles">${tiles.map(i=>`<button class="tile" data-a="t" data-i="${i}" ${got.includes(i)?"disabled":""}>${esc(parts[i])}</button>`).join("")}</div><div class="row"><button class="sec" data-a="x">Effacer</button></div><div id="fb"></div>`);
+  ACT.t=b=>{const i=+b.dataset.i;if(got.includes(i))return;got.push(i);if(got.length<parts.length)return draw();const ok=got.every((g,j)=>g===j);M.tot++;if(ok)M.ok++;beep(ok);const full=parts.join(" ");draw();setTimeout(()=>say(full),250);
+   if(ok){$("#fb").innerHTML=`<p class="fbok">${pick(BRAVO)}</p>`;ACT={};setTimeout(nx,1500)}else{$("#fb").innerHTML=`<p class="fbno">Presque ! La bonne phrase : « ${esc(full)} »</p><button class="go" data-a="cont">Continuer</button>`;ACT={cont:nx}}};
+  ACT.x=()=>{got=[];draw()}};
+ draw()}
+function stepWin(){stopTimer();const r=M.tot?M.ok/M.tot:1,st=r>=.85?3:r>=.6?2:1;S.missions[M.wk]=(S.missions[M.wk]||0)+1;const t=tk(new Date());if(!S.days.includes(t))S.days.push(t);save();
+ const d=new Date(),mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()+6)%7));const cells=["L","M","M","J","V","S","D"].map((l,i)=>{const x=new Date(mon);x.setDate(mon.getDate()+i);return `<div class="${S.days.includes(tk(x))?'on':''}">${l}</div>`}).join("");
+ stage(`<p class="kicker">5 · Victoire</p><h2>Bravo ${esc(nm())} !</h2><div class="stars">${STAR(st>=1)+STAR(st>=2)+STAR(st>=3)}</div><p class="big" style="text-align:center">${M.ok} bonnes réponses sur ${M.tot}</p>${M.fresh.length?`<p class="hint">Ce soir, j'ai appris :</p><div class="chips">${M.fresh.map(l=>`<span>${det(W(ALL[l].raw))}</span>`).join("")}</div>`:""}<p class="hint" style="margin-top:18px">Ma semaine :</p><div class="week7">${cells}</div><p class="muted" style="margin-top:10px">${streak()} soir${streak()>1?"s":""} d'affilée. Reviens demain !</p><div class="row"><button class="go" data-a="home">Retour à la carte</button></div>`)}
+/* chrono */
+function showChrono(wk){place="chrono";view.innerHTML=`<div class="mbar"><div class="dots"></div><button class="pbtn" data-a="home">Carte</button></div><main class="wrap"><section class="stage" id="stage"></section></main>`;M=M||{};chrono(wk,showMap)}
+function chrono(wk,done){const w=WEEKS[wk-1],toks=fill(w.text).split(/\s+/),isW=t=>/[A-Za-zÀ-ÿ0-9]/.test(t);let left=60,last=-1,errs=new Set(),phase="ready",iv=null,t0=0,scale=1;
+ const n=()=>{let c=0;for(let i=0;i<=last;i++)if(isW(toks[i])&&!errs.has(i))c++;return c};
+ const txt=()=>`<div class="text">${toks.map((t,i)=>`<span class="cw ${i===last?'last':''} ${errs.has(i)?'err':''} ${last>=0&&i>last?'after':''}" data-a="w" data-i="${i}">${esc(t)}</span>`).join(" ")}</div>`;
+ const draw=()=>{let h=`<p class="kicker">Chrono lecture · semaine ${wk}</p>`;
+  if(phase==="ready")h+=`<h2>1 minute pour lire</h2><p class="hint">Appuie sur Go, puis lis le texte à voix haute. L'adulte écoute.</p><div class="row"><button class="go" data-a="go">Go !</button></div>`+txt();
+  if(phase==="run")h+=`<div class="count">${left}</div><div class="row"><button class="sec" data-a="fin">J'ai fini le texte</button></div>`+txt();
+  if(phase==="last")h+=`<h2>Stop !</h2><p class="hint">Adulte : touchez le dernier mot lu, puis les mots ratés. Ensuite, validez.</p><div class="row"><button class="go" data-a="ok" ${last<0?"disabled":""}>Valider : ${n()} mots</button></div>`+txt();
+  if(phase==="res"){const hist=S.flu.filter(f=>f.w===wk),score=hist[hist.length-1].n,first=hist[0].n;h+=`<h2>${score} mots par minute</h2><p class="big">${hist.length>1?(score>=first?`+${score-first} depuis ton premier chrono de la semaine !`:"Continue, ça va monter !"):"Premier chrono de la semaine : bravo !"}</p>${fluBars()}<div class="row"><button class="go" data-a="bk">Continuer</button></div>`}
+  stage(h);
+  ACT.go=()=>{phase="run";t0=Date.now();left=60;draw();iv=setInterval(()=>{if(!$("#stage")){clearInterval(iv);return}left--;const c=$(".count");if(c)c.textContent=left;if(left<=0){clearInterval(iv);beep(true);phase="last";draw()}},1000)};
+  ACT.fin=()=>{clearInterval(iv);last=toks.length-1;scale=60/Math.max(20,(Date.now()-t0)/1000);phase="last";draw()};
+  ACT.w=b=>{if(phase!=="last")return;const i=+b.dataset.i;if(last<0||i>last)last=i;else if(i!==last){errs.has(i)?errs.delete(i):errs.add(i)}draw()};
+  ACT.ok=()=>{if(last<0)return;S.flu.push({d:tk(new Date()),w:wk,n:Math.round(n()*scale)});save();phase="res";draw()};
+  ACT.bk=()=>{clearInterval(iv);done()}};
+ draw()}
+function fluBars(){const h=S.flu.slice(-8);if(!h.length)return '<p class="muted">Pas encore de chrono.</p>';const mx=Math.max(...h.map(f=>f.n),1);return `<div class="bars">${h.map(f=>`<div class="bar"><span>${f.d.slice(8)}/${f.d.slice(5,7)} · S${f.w}</span><span><b style="width:${Math.max(4,f.n/mx*100)}%"></b></span><span>${f.n}</span></div>`).join("")}</div>`}
+/* parent */
+function showParent(){place="parent";ACT={};const box=[1,2,3,4,5].map(b=>Object.values(S.boxes).filter(v=>v===b).length),mb=Math.max(...box,1);
+ view.innerHTML=topBar()+`<main class="wrap"><div class="panel"><h2 class="title" style="font-size:36px">Espace parent</h2><p class="muted" id="sync">${dbRef?"La progression est enregistrée dans votre compte Claude.":"La progression est enregistrée dans ce navigateur."}</p>
+ <div class="grid2"><div><label for="pn">Prénom de l'enfant</label><input type="text" id="pn" value="${esc(S.name)}" placeholder="Adam" autocomplete="off">
+ <label for="wk">Semaine du programme</label><select id="wk">${WEEKS.map(w=>`<option value="${w.n}" ${w.n===S.week?"selected":""}>Semaine ${w.n} · ${esc(w.title)}</option>`).join("")}</select>
+ <label for="vc">Voix (accent français)</label><select id="vc" data-n="${frVoices.length}"><option value="">Automatique : meilleure voix de France</option>${frVoices.map(v=>`<option value="${esc(v.name)}" ${S.voice===v.name?"selected":""}>${esc(v.name)} · ${esc(v.lang)}</option>`).join("")}${tts?`<option value="claude" ${S.voice==="claude"?"selected":""}>Voix Claude</option>`:""}</select>
+ <p class="muted" style="margin:6px 0 0">${frVoices.some(v=>/^fr[-_]FR/i.test(v.lang))?"Une voix française de France est installée sur cet appareil.":"Aucune voix française de France sur cet appareil : ajoutez-en une dans les réglages de langue de l'ordinateur ou du téléphone, ou utilisez Chrome."}</p>
+ <div class="row" style="margin-top:10px"><button class="sec" data-say="Bonjour ! Bienvenue sur l'Île aux mots. Le renard t'attend.">Écouter un exemple</button></div>
+ <label class="chk"><input type="checkbox" id="sl" ${S.slow?"checked":""}> Voix lente</label>
+ <h3>Missions par semaine</h3><div class="bars">${WEEKS.map(w=>`<div class="bar"><span>S${w.n}</span><span><b style="width:${Math.min(100,(S.missions[w.n]||0)/7*100)}%"></b></span><span>${S.missions[w.n]||0}</span></div>`).join("")}</div></div>
+ <div><h3>Boîte à mots</h3><p class="muted">Case 1 : mots nouveaux ou oubliés. Case 5 : mots sus.</p><div class="bars">${box.map((c,i)=>`<div class="bar"><span>Case ${i+1}</span><span><b style="width:${c/mb*100}%"></b></span><span>${c}</span></div>`).join("")}</div>
+ <h3>Chrono lecture (mots par minute)</h3>${fluBars()}
+ <h3>Recommencer</h3><p class="muted">Efface toute la progression de ce jeu.</p><div class="row" id="rz"><button class="sec" data-a="r1">Effacer la progression</button></div></div></div>
+ <div class="row"><button class="go" data-a="home">Retour à la carte</button></div></div></main>`;
+ $("#pn").addEventListener("change",e=>{S.name=e.target.value.slice(0,30);save()});
+ $("#wk").addEventListener("change",e=>{S.week=+e.target.value;save()});
+ $("#vc").addEventListener("change",e=>{S.voice=e.target.value;save()});
+ $("#sl").addEventListener("change",e=>{S.slow=e.target.checked;save()});
+ ACT.r1=()=>{$("#rz").innerHTML=`<button class="go" data-a="r2">Oui, tout effacer</button><button class="sec" data-a="parent">Annuler</button>`};
+ ACT.r2=()=>{const n=S.name;S=clone(DEF);S.name=n;save();showParent()}}
+/* démarrage + capacités */
+showMap();
+(async()=>{try{if(!window.claude||!claude.use)return;const t=await claude.use("tts");if(t){tts=t;document.body.classList.add("voice")}}catch(e){}})();
+(async()=>{try{if(!window.claude||!claude.use)return;const db=await claude.use("db"),u=await claude.use("user");if(!db||!u)return;const id=await u.id();if(!id)return;const ref=db.doc("data/users/"+id+"/progress");
+ const snap=await Promise.race([ref.get(),new Promise((_,r)=>setTimeout(()=>r(0),10000))]);dbRef=ref;
+ if(snap.exists){const d=snap.data();if(d&&d.v===1&&(d.updated||0)>(S.updated||0)){S=Object.assign(clone(DEF),clone(d));try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(place==="map")showMap();if(place==="parent")showParent()}}
+ else if(S.updated)save();const sy=$("#sync");if(sy)sy.textContent="La progression est enregistrée dans votre compte Claude."}catch(e){}})();
+}
+</script>
+</body>
+</html>
